@@ -1,0 +1,47 @@
+"""Test suite for kubectl_tools module."""
+
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load(":simple_test.bzl", "simple_test_suite")
+load(":validation_test.bzl", "validation_test_suite")
+load(":integration_test.bzl", "integration_test_targets")
+
+# Run test suites to generate test targets
+_simple_tests = simple_test_suite()
+_validation_tests = validation_test_suite()
+_integration_targets = integration_test_targets()
+
+# Collect all test targets (unit tests only, integration tests are manual)
+_all_tests = _simple_tests + _validation_tests
+
+# Test suite that runs all kubectl_tools tests
+test_suite(
+    name = "all_tests",
+    tests = _all_tests,
+)
+
+# Individual test suites for selective testing
+test_suite(
+    name = "simple_tests",
+    tests = _simple_tests,
+)
+
+test_suite(
+    name = "validation_tests",
+    tests = _validation_tests,
+)
+
+# Integration test suite (manual execution)
+test_suite(
+    name = "integration_tests",
+    tests = _integration_targets,
+    tags = ["manual", "integration"],
+)
+
+# Build test to ensure kubectl tools macros are valid
+build_test(
+    name = "build_test_kubectl_macros",
+    targets = [
+        # Test that our test targets can be built
+        ":all_tests",
+    ],
+)

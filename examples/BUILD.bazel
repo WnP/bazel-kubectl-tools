@@ -1,0 +1,84 @@
+load("@kubectl_tools//:defs.bzl", "kubectl_apply", "kubectl_delete", "kubectl_exec", "kubectl_get")
+
+# Example deployments
+kubectl_apply(
+    name = "deploy_nginx",
+    resources = ["nginx-deployment.yaml"],
+    namespace = "default",
+    tags = ["manual", "requires-k8s"],
+)
+
+kubectl_delete(
+    name = "delete_nginx",
+    resource_type = "deployment",
+    namespace = "default",
+    tags = ["manual", "requires-k8s"],
+)
+
+kubectl_exec(
+    name = "nginx_info",
+    pod = "nginx-pod",
+    command = "nginx -v",
+    namespace = "default",
+    tags = ["manual", "requires-k8s"],
+)
+
+# Example kubectl get operations (generates files as output)
+kubectl_get(
+    name = "list_pods",
+    kind = "pods",
+    namespace = "default",
+    tags = ["manual", "requires-k8s"],
+    # Outputs to list_pods.out by default
+)
+
+kubectl_get(
+    name = "get_nginx_deployment",
+    kind = "deployment",
+    resource_name = "nginx-deployment",
+    output = "json",
+    namespace = "default",
+    output_file = "nginx-deployment.json",
+    tags = ["manual", "requires-k8s"],
+)
+
+kubectl_get(
+    name = "list_services_wide",
+    kind = "services",
+    output = "wide",
+    namespace = "default",
+    output_file = "services-wide.txt",
+    tags = ["manual", "requires-k8s"],
+)
+
+# Example showing how to consume kubectl_get output in other rules
+# Note: This target also requires manual tag since it depends on list_pods
+genrule(
+    name = "process_pod_list",
+    srcs = [":list_pods"],  # Consumes the output file from kubectl_get
+    outs = ["pod_count.txt"],
+    cmd = """wc -l $(location :list_pods) | awk '{print $$1-1}' > $@""",
+    tags = ["manual", "requires-k8s"],
+)
+
+# Example showing how to use kubectl_get output as input to sh_binary
+# Note: This would work when a cluster is available and get_nginx_deployment succeeds
+# sh_binary(
+#     name = "show_nginx_deployment",
+#     srcs = ["show_deployment.sh"],
+#     data = [":get_nginx_deployment"],  # Can access nginx-deployment.json
+# )
+
+# Example demonstrating the concept without requiring kubectl to run
+genrule(
+    name = "create_show_script",
+    outs = ["show_deployment.sh"],
+    cmd = """cat > $@ <<'EOF'
+#!/bin/bash
+echo "Nginx deployment details:"
+echo "This script would read from: nginx-deployment.json"
+echo "Usage: Access kubectl_get output file in your scripts"
+echo "Example: cat \\$${BUILD_WORKSPACE_DIRECTORY}/bazel-bin/external/kubectl_tools~/examples/nginx-deployment.json"
+EOF
+    chmod +x $@""",
+)

@@ -1,0 +1,20 @@
+"""kubectl_tools module for Kubernetes resource management with Bazel.
+
+This module provides simple kubectl integration via sh_binary targets.
+"""
+
+module(
+    name = "kubectl_tools",
+    version = "1.0.0",
+    compatibility_level = 1,
+)
+
+# Dependencies for testing
+bazel_dep(name = "bazel_skylib", version = "1.8.0")
+
+# Platform definitions for host platform configuration
+bazel_dep(name = "platforms", version = "0.0.10")
+
+# Extension for configuring kubectl binary
+kubectl_extension = use_extension(":extensions.bzl", "kubectl")
+use_repo(kubectl_extension, "kubectl_binary")

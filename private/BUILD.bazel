@@ -1,0 +1,4 @@
+"""Private implementation files for kubectl_tools."""
+
+# Export the kubectl_download.bzl file so it can be loaded by extensions.bzl
+exports_files(["kubectl_download.bzl"])
