@@ -191,11 +191,15 @@ def kubectl_get(name, kind, output_file = None, output = None, resource_name = N
     if output:
         cmd_args.extend(["-o", output])
 
-    # Build the command string
-    cmd = "$(location @kubectl_binary//:kubectl_binary) " + " ".join([
+    # Build the command string with shell to access environment variables
+    kubectl_cmd = "$(location @kubectl_binary//:kubectl_binary) " + " ".join([
         "'" + arg + "'" if " " in arg else arg
         for arg in cmd_args
-    ]) + " > $@"
+    ])
+
+    # Run through bash to access environment variables
+    # Escape $ as $$ for Bazel's Make variable expansion, and set default KUBECONFIG if not set
+    cmd = "source ~/.bashrc 2>/dev/null || true; export KUBECONFIG=$${KUBECONFIG:-~/.kube/config}; " + kubectl_cmd + " > $@"
 
     # Merge default tags with user-provided tags
     default_tags = ["local", "no-remote", "no-cache"]
@@ -209,5 +213,6 @@ def kubectl_get(name, kind, output_file = None, output = None, resource_name = N
         tools = ["@kubectl_binary//:kubectl_binary"],
         srcs = [kubeconfig] if kubeconfig else [],
         tags = merged_tags,
+        local = True,
         **kwargs
     )
