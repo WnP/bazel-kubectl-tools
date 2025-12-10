@@ -4,6 +4,7 @@ load("@kubectl_tools//:defs.bzl", "kubectl_apply", "kubectl_delete", "kubectl_ex
 kubectl_apply(
     name = "deploy_nginx",
     resources = ["nginx-deployment.yaml"],
+    context = "minikube",
     namespace = "default",
     tags = ["manual", "requires-k8s"],
 )
@@ -11,6 +12,7 @@ kubectl_apply(
 kubectl_delete(
     name = "delete_nginx",
     resource_type = "deployment",
+    context = "minikube",
     namespace = "default",
     tags = ["manual", "requires-k8s"],
 )
@@ -19,6 +21,7 @@ kubectl_exec(
     name = "nginx_info",
     pod = "nginx-pod",
     command = "nginx -v",
+    context = "minikube",
     namespace = "default",
     tags = ["manual", "requires-k8s"],
 )
@@ -27,6 +30,7 @@ kubectl_exec(
 kubectl_get(
     name = "list_pods",
     kind = "pods",
+    context = "minikube",
     namespace = "default",
     tags = ["manual", "requires-k8s"],
     # Outputs to list_pods.out by default
@@ -36,6 +40,7 @@ kubectl_get(
     name = "get_nginx_deployment",
     kind = "deployment",
     resource_name = "nginx-deployment",
+    context = "minikube",
     output = "json",
     namespace = "default",
     output_file = "nginx-deployment.json",
@@ -45,6 +50,7 @@ kubectl_get(
 kubectl_get(
     name = "list_services_wide",
     kind = "services",
+    context = "minikube",
     output = "wide",
     namespace = "default",
     output_file = "services-wide.txt",

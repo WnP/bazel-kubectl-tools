@@ -11,12 +11,15 @@ def kubectl_apply(name, resources = None, urls = None, namespace = None, context
         resources: List of YAML files to apply (optional if urls is specified)
         urls: List of URLs to apply from (optional if resources is specified)
         namespace: Kubernetes namespace (optional)
-        context: kubectl context to use (optional)
+        context: kubectl context to use (REQUIRED)
         kubeconfig: Path to kubeconfig file (optional)
         **kwargs: Additional arguments passed to sh_binary
     """
     if not resources and not urls:
         fail("Either resources or urls must be specified")
+
+    if not context:
+        fail("context is required for kubectl_apply. Please provide the Kubernetes context name.")
 
     # Build kubectl apply command arguments
     args = ["apply"]
@@ -62,12 +65,15 @@ def kubectl_delete(name, resources = None, resource_type = None, namespace = Non
         resources: List of YAML files to delete (optional if resource_type is specified)
         resource_type: Resource type to delete (e.g., "deployment", "service")
         namespace: Kubernetes namespace (optional)
-        context: kubectl context to use (optional)
+        context: kubectl context to use (REQUIRED)
         kubeconfig: Path to kubeconfig file (optional)
         **kwargs: Additional arguments passed to sh_binary
     """
     if not resources and not resource_type:
         fail("Either resources or resource_type must be specified")
+
+    if not context:
+        fail("context is required for kubectl_delete. Please provide the Kubernetes context name.")
 
     # Build kubectl delete command arguments
     args = ["delete"]
@@ -113,10 +119,13 @@ def kubectl_exec(name, pod, command, namespace = None, container = None, context
         command: Command to execute (as string or list)
         namespace: Kubernetes namespace (optional)
         container: Container name within pod (optional)
-        context: kubectl context to use (optional)
+        context: kubectl context to use (REQUIRED)
         kubeconfig: Path to kubeconfig file (optional)
         **kwargs: Additional arguments passed to sh_binary
     """
+    if not context:
+        fail("context is required for kubectl_exec. Please provide the Kubernetes context name.")
+
     # Build kubectl exec command arguments
     args = ["exec"]
 
@@ -166,10 +175,13 @@ def kubectl_get(name, kind, output_file = None, output = None, resource_name = N
         output: Output format (e.g., "json", "yaml", "wide") (optional)
         resource_name: Specific resource name to get (optional)
         namespace: Kubernetes namespace (optional)
-        context: kubectl context to use (optional)
+        context: kubectl context to use (REQUIRED)
         kubeconfig: Path to kubeconfig file (optional)
         **kwargs: Additional arguments passed to genrule
     """
+    if not context:
+        fail("context is required for kubectl_get. Please provide the Kubernetes context name.")
+
     if not output_file:
         output_file = name + ".out"
 

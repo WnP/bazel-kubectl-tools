@@ -37,9 +37,9 @@ load("@kubectl_tools//:defs.bzl", "kubectl_apply")
 kubectl_apply(
     name = "deploy_app",
     resources = ["deployment.yaml", "service.yaml"],
-    namespace = "default",       # Optional
-    context = "my-cluster",      # Optional
-    kubeconfig = "/path/to/config"  # Optional
+    context = "my-cluster",              # REQUIRED: Kubernetes context
+    namespace = "default",               # Optional
+    kubeconfig = "/path/to/config"       # Optional
 )
 
 # Run with:
@@ -56,13 +56,15 @@ load("@kubectl_tools//:defs.bzl", "kubectl_delete")
 # Delete from YAML files
 kubectl_delete(
     name = "remove_app",
-    resources = ["deployment.yaml"]
+    resources = ["deployment.yaml"],
+    context = "my-cluster"       # REQUIRED: Kubernetes context
 )
 
 # Delete all resources of a type
 kubectl_delete(
     name = "delete_deployments",
     resource_type = "deployment",
+    context = "my-cluster",      # REQUIRED: Kubernetes context
     namespace = "default"
 )
 ```
@@ -79,15 +81,17 @@ kubectl_exec(
     name = "pod_command",
     pod = "my-pod",
     command = "ls /app",
+    context = "my-cluster",      # REQUIRED: Kubernetes context
     namespace = "default",
-    container = "app"  # Optional: specify container
+    container = "app"            # Optional: specify container
 )
 
 # Execute multiple command arguments
 kubectl_exec(
     name = "pod_script",
     pod = "my-pod",
-    command = ["bash", "-c", "echo Hello && date"]
+    command = ["bash", "-c", "echo Hello && date"],
+    context = "my-cluster"       # REQUIRED: Kubernetes context
 )
 ```
 
@@ -102,8 +106,9 @@ load("@kubectl_tools//:defs.bzl", "kubectl_get")
 kubectl_get(
     name = "list_pods",
     kind = "pods",
+    context = "my-cluster",      # REQUIRED: Kubernetes context
     namespace = "default",
-    output = "yaml"  # Specify output format to create a file
+    output = "yaml"              # Specify output format to create a file
 )
 
 # Get a specific deployment, output to a file
@@ -111,8 +116,9 @@ kubectl_get(
     name = "get_deployment",
     kind = "deployment",
     resource_name = "my-app",
+    context = "my-cluster",      # REQUIRED: Kubernetes context
     namespace = "production",
-    output = "json"  # Creates a JSON file that can be used by other rules
+    output = "json"              # Creates a JSON file that can be used by other rules
 )
 
 # Example of consuming the output in another rule
@@ -136,7 +142,7 @@ Supported options:
 - `output`: Output format for file creation ("json", "yaml", "wide")
 - `resource_name`: Optional specific resource name
 - `namespace`: Optional namespace
-- `context`: Optional Kubernetes context
+- `context`: **REQUIRED** Kubernetes context
 - `kubeconfig`: Optional kubeconfig file path
 
 #### Best Practices
@@ -162,10 +168,11 @@ Supported versions depend on the available binaries. The default is 1.31.0.
 
 ## Best Practices
 
-1. Use absolute paths for kubeconfig
-2. Keep sensitive information out of BUILD files
-3. Use context and namespace for clarity
-4. Test kubectl targets before running in production
+1. **Always provide context**: The `context` parameter is mandatory for all kubectl operations to ensure explicit cluster selection
+2. Use absolute paths for kubeconfig
+3. Keep sensitive information out of BUILD files
+4. Use namespace for clarity when working with multiple namespaces
+5. Test kubectl targets before running in production
 
 ## Contributing
 
