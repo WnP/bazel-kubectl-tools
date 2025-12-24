@@ -9,7 +9,7 @@ The `kubectl_tools` module provides a simple, hermetic way to integrate kubectl 
 - Platform-agnostic kubectl binary download
 - Simple Bazel macros for kubectl operations
 - Flexible configuration options
-- Supports `get`, `apply`, `delete`, and `exec` operations
+- Supports `get`, `apply`, `delete`, `exec`, and `wait` operations
 - Hermetic execution via `sh_binary` targets
 
 ## Installation
@@ -149,6 +149,56 @@ Supported options:
 - Use the output file for further processing in other Bazel rules
 - Specify an output format to create a file
 - The output can be consumed by other genrules, scripts, or custom rules
+
+### kubectl_wait
+
+Wait for a Kubernetes resource to exist and reach a specified condition. Unlike native `kubectl wait`, this implementation includes retry logic to handle resources that don't exist yet (e.g., CRDs being installed asynchronously by operators).
+
+```python
+load("@kubectl_tools//:defs.bzl", "kubectl_wait")
+
+# Wait for a CRD to be established
+kubectl_wait(
+    name = "wait_for_crd",
+    kind = "crd",
+    resource_name = "myresources.example.com",
+    condition = "Established",
+    context = "my-cluster",      # REQUIRED: Kubernetes context
+    timeout = "120",             # Optional: timeout in seconds (default: 60)
+    interval = "5",              # Optional: retry interval in seconds (default: 5)
+)
+
+# Wait for a deployment to be available
+kubectl_wait(
+    name = "wait_for_deployment",
+    kind = "deployment",
+    resource_name = "my-app",
+    condition = "Available",
+    context = "my-cluster",
+    namespace = "default",
+)
+
+# Wait for pods matching a label selector
+kubectl_wait(
+    name = "wait_for_pods",
+    kind = "pod",
+    selector = "app=nginx",
+    condition = "Ready",
+    context = "my-cluster",
+    namespace = "default",
+)
+```
+
+Supported options:
+- `kind`: Resource type (e.g., "pod", "deployment", "crd")
+- `condition`: Condition to wait for (e.g., "Ready", "Available", "Established")
+- `resource_name`: Optional specific resource name
+- `selector`: Optional label selector (e.g., "app=nginx")
+- `namespace`: Optional namespace
+- `context`: **REQUIRED** Kubernetes context
+- `timeout`: Timeout in seconds (default: "60")
+- `interval`: Retry interval in seconds (default: "5")
+- `kubeconfig`: Optional kubeconfig file path
 
 ## Version Configuration
 

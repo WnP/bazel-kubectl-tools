@@ -165,6 +165,75 @@ def kubectl_exec(name, pod, command, namespace = None, container = None, context
         **kwargs
     )
 
+def kubectl_wait(name, kind, condition, resource_name = None, selector = None, namespace = None, context = None, kubeconfig = None, timeout = "60", interval = "5", **kwargs):
+    """Create a sh_binary target that waits for a Kubernetes resource condition with retry logic.
+
+    This handles the case where the resource doesn't exist yet by retrying until
+    the resource appears and the condition is met.
+
+    Args:
+        name: Name of the target
+        kind: Resource kind to wait for (e.g., "pod", "deployment", "crd")
+        condition: Condition to wait for (e.g., "condition=Ready", "condition=Established")
+        resource_name: Specific resource name to wait for (optional)
+        selector: Label selector to filter resources (optional, e.g., "app=nginx")
+        namespace: Kubernetes namespace (optional)
+        context: kubectl context to use (REQUIRED)
+        kubeconfig: Path to kubeconfig file (optional)
+        timeout: Timeout duration in seconds (default: "60")
+        interval: Retry interval in seconds (default: "5")
+        **kwargs: Additional arguments passed to sh_binary
+    """
+    if not context:
+        fail("context is required for kubectl_wait. Please provide the Kubernetes context name.")
+
+    # Parse timeout to seconds if it has a suffix
+    timeout_secs = timeout.rstrip("s") if timeout.endswith("s") else timeout
+
+    # Build resource specifier
+    if resource_name:
+        resource_spec = "{}/{}".format(kind, resource_name)
+    else:
+        resource_spec = kind
+
+    # Build condition string
+    if condition.startswith("condition="):
+        condition_arg = condition
+    else:
+        condition_arg = "condition=" + condition
+
+    # Build args: kubectl_path timeout interval resource condition [kubectl_args...]
+    args = [
+        "$(location @kubectl_binary//:kubectl_binary)",
+        timeout_secs,
+        interval,
+        resource_spec,
+        condition_arg,
+    ]
+
+    # Add kubectl args
+    if namespace:
+        args.extend(["-n", namespace])
+    if context:
+        args.extend(["--context", context])
+    if kubeconfig:
+        args.extend(["--kubeconfig", kubeconfig])
+    if selector:
+        args.extend(["-l", selector])
+
+    # Merge default tags with user-provided tags
+    default_tags = ["local", "no-remote", "no-cache"]
+    merged_tags = list(default_tags + kwargs.pop("tags", []))
+
+    native.sh_binary(
+        name = name,
+        srcs = ["@kubectl_tools//private:kubectl_wait.sh"],
+        args = args,
+        data = ["@kubectl_binary//:kubectl_binary"] + ([kubeconfig] if kubeconfig else []),
+        tags = merged_tags,
+        **kwargs
+    )
+
 def kubectl_get(name, kind, output_file = None, output = None, resource_name = None, namespace = None, context = None, kubeconfig = None, **kwargs):
     """Create a genrule target that gets Kubernetes resources and writes to file.
 
